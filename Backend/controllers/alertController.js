@@ -1,4 +1,5 @@
 const Alert = require('../models/Alert');
+const mongoose = require('mongoose');
 
 exports.createAlert = async (req, res) => {
   try {

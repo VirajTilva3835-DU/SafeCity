@@ -7,8 +7,6 @@ exports.createAlert = async (req, res) => {
     
     if (!type) throw new Error('Alert type is required');
 
-    if (!type) throw new Error('Alert type is required');
-
     // Normalize type (e.g., 'fire' -> 'Fire', but 'SOS' -> 'SOS')
     let normalizedType = type.trim();
     if (normalizedType.toUpperCase() === 'SOS') {

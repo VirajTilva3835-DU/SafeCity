@@ -45,10 +45,12 @@ const OneTapSOS = () => {
         try {
           const { data } = await axios.get(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
           detectedState = data.address.state || 'Gujarat';
-        } catch (e) {}
+        } catch {
+          // fallback to default state
+        }
         await sendSOS(latitude, longitude, detectedState);
       },
-      async (error) => {
+      async (_error) => {
         // Fallback to Gujarat if location fails
         await sendSOS();
       },

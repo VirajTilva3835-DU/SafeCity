@@ -18,7 +18,6 @@ const BentoDashboard = () => {
     volunteers: 42
   });
   const [recentAlerts, setRecentAlerts] = useState([]);
-  const [marketplaceItems, setMarketplaceItems] = useState([]);
   const [isAIDispatching, setIsAIDispatching] = useState(false);
   const navigate = useNavigate();
 
@@ -29,7 +28,6 @@ const BentoDashboard = () => {
         const { data: volunteers } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/collaboration/volunteers`);
         const { data: items } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/collaboration/marketplace`);
         setRecentAlerts(alerts.slice(0, 5));
-        setMarketplaceItems(items.slice(0, 3));
         setStats({
           alerts: alerts.length,
           critical: alerts.filter(a => a.triageLevel >= 4).length,

@@ -100,7 +100,7 @@ const EmergencyForm = () => {
           const { latitude, longitude } = position.coords;
           setFormData(prev => ({ ...prev, location: { lat: latitude, lng: longitude } }));
         },
-        (err) => console.log("Location access denied or unavailable"),
+        (_err) => console.log("Location access denied or unavailable"),
         { enableHighAccuracy: true, timeout: 5000 }
       );
     }
@@ -111,7 +111,7 @@ const EmergencyForm = () => {
     if (formData.location.lat && formData.location.lng) {
       fetchStateFromCoords(formData.location.lat, formData.location.lng);
     }
-  }, [formData.location]);
+  }, [formData.location.lat, formData.location.lng]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

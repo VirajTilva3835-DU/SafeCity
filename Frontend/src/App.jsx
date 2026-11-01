@@ -21,6 +21,7 @@ import BroadcastNotification from './components/BroadcastNotification';
 import EmergencyNotification from './components/EmergencyNotification';
 import DemoDisclaimer from './components/DemoDisclaimer';
 import { DeviceProvider } from './context/DeviceContext';
+import { Analytics } from '@vercel/analytics/react';
 
 
 
@@ -101,6 +102,7 @@ function App() {
           </Routes>
           <BroadcastNotification />
           <EmergencyNotification />
+          <Analytics />
         </div>
       </DeviceProvider>
     </AuthProvider>

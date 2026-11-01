@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMapEvents, useMap } from 'react-leaflet';
 import axios from 'axios';
 import L from 'leaflet';
@@ -20,6 +20,23 @@ let DefaultIcon = L.icon({
   iconAnchor: [12, 41]
 });
 L.Marker.prototype.options.icon = DefaultIcon;
+
+const RecenterMap = ({ center, zoom }) => {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, zoom);
+  }, [center, zoom, map]);
+  return null;
+};
+
+const MapClickHandler = ({ onMapClick }) => {
+  useMapEvents({
+    click(e) {
+      if (onMapClick) onMapClick(e.latlng);
+    },
+  });
+  return null;
+};
 
 const HazardMap = ({ stateFilter = null, showIncidents = false, onUpdateStatus = null }) => {
   const [hazards, setHazards] = useState([]);
@@ -48,14 +65,14 @@ const HazardMap = ({ stateFilter = null, showIncidents = false, onUpdateStatus =
     radius: 500
   });
 
-  const fetchHazards = async () => {
+  const fetchHazards = useCallback(async () => {
     try {
       const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/hazards`);
       setHazards(data);
     } catch (err) { console.error(err); }
-  };
+  }, []);
 
-  const fetchAlerts = async () => {
+  const fetchAlerts = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       // If we are in a department view, we use the department endpoint, otherwise admin/public
@@ -79,7 +96,7 @@ const HazardMap = ({ stateFilter = null, showIncidents = false, onUpdateStatus =
 
       setAlerts(filtered.filter(a => a.status !== 'Resolved'));
     } catch (err) { console.error(err); }
-  };
+  }, [stateFilter]);
 
   useEffect(() => {
     fetchHazards();
@@ -114,7 +131,7 @@ const HazardMap = ({ stateFilter = null, showIncidents = false, onUpdateStatus =
       socket.off('alertUpdated');
       clearTimeout(timer);
     };
-  }, [stateFilter, showIncidents]);
+  }, [stateFilter, showIncidents, fetchHazards, fetchAlerts]);
 
   const handleSearch = async (e) => {
     if (e) e.preventDefault();
@@ -132,24 +149,6 @@ const HazardMap = ({ stateFilter = null, showIncidents = false, onUpdateStatus =
     } finally {
       setIsSearching(false);
     }
-  };
-
-  const RecenterMap = ({ center, zoom }) => {
-    const map = useMap();
-    useEffect(() => {
-      map.setView(center, zoom);
-    }, [center, zoom]);
-    return null;
-  };
-
-  const MapEvents = () => {
-    useMapEvents({
-      click(e) {
-        setNewHazard(e.latlng);
-        setShowForm(true);
-      },
-    });
-    return null;
   };
 
   const handleSubmit = async (e) => {
@@ -213,7 +212,7 @@ const HazardMap = ({ stateFilter = null, showIncidents = false, onUpdateStatus =
       <MapContainer center={mapCenter} zoom={zoom} style={{ height: '100%', width: '100%' }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
         <RecenterMap center={mapCenter} zoom={zoom} />
-        <MapEvents />
+        <MapClickHandler onMapClick={(latlng) => { setNewHazard(latlng); setShowForm(true); }} />
         
         {hazards.map((h, i) => (
           <React.Fragment key={i}>

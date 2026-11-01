@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
@@ -16,38 +16,7 @@ const DepartmentDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [activeTab, setActiveTab] = useState('alerts');
 
-  useEffect(() => {
-    const fetchAlerts = async () => {
-      if (!user) return;
-      try { 
-        const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
-        const token = localStorage.getItem('token');
-        const { data } = await axios.get(`${baseUrl}/api/alerts/department?deptType=${user.departmentType}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        }); 
-        
-        const rawAlerts = data.alerts || (Array.isArray(data) ? data : []);
-        // Apply local filtering to ensure absolute relevance
-        const filtered = rawAlerts.filter(a => checkRelevance(a));
-        setAlerts(filtered); 
-      }
-      catch (err) { 
-        setAlerts([]); 
-      }
-    };
-    fetchAlerts();
-    socket.on('newAlert', (newAlert) => {
-      if (checkRelevance(newAlert)) {
-        setAlerts(prev => [newAlert, ...prev.filter(a => a._id !== newAlert._id)]);
-        setNotifications(prev => [...prev, `NEW: ${newAlert.type} report!`]);
-        setTimeout(() => setNotifications(prev => prev.slice(1)), 5000);
-      }
-    });
-    socket.on('alertUpdated', (updatedAlert) => setAlerts(prev => prev.map(a => a._id === updatedAlert._id ? updatedAlert : a)));
-    return () => { socket.off('newAlert'); socket.off('alertUpdated'); };
-  }, [user]);
-
-  const checkRelevance = (alert) => {
+  const checkRelevance = useCallback((alert) => {
     if (!user || !alert) return false;
     
     const alertState = (alert.state || '').trim().toLowerCase();
@@ -66,7 +35,38 @@ const DepartmentDashboard = () => {
     if (dept === 'fire') return aDept === 'fire' || aType === 'fire' || aType === 'sos';
     if (dept === 'ambulance' || dept === 'medical') return aDept === 'ambulance' || aDept === 'medical' || aType === 'medical' || aType === 'accident' || aType === 'sos';
     return aDept === dept || aDept === 'none' || aType === 'sos';
-  };
+  }, [user]);
+
+  useEffect(() => {
+    const fetchAlerts = async () => {
+      if (!user) return;
+      try { 
+        const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+        const token = localStorage.getItem('token');
+        const { data } = await axios.get(`${baseUrl}/api/alerts/department?deptType=${user.departmentType}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }); 
+        
+        const rawAlerts = data.alerts || (Array.isArray(data) ? data : []);
+        // Apply local filtering to ensure absolute relevance
+        const filtered = rawAlerts.filter(a => checkRelevance(a));
+        setAlerts(filtered); 
+      }
+      catch (_err) { 
+        setAlerts([]); 
+      }
+    };
+    fetchAlerts();
+    socket.on('newAlert', (newAlert) => {
+      if (checkRelevance(newAlert)) {
+        setAlerts(prev => [newAlert, ...prev.filter(a => a._id !== newAlert._id)]);
+        setNotifications(prev => [...prev, `NEW: ${newAlert.type} report!`]);
+        setTimeout(() => setNotifications(prev => prev.slice(1)), 5000);
+      }
+    });
+    socket.on('alertUpdated', (updatedAlert) => setAlerts(prev => prev.map(a => a._id === updatedAlert._id ? updatedAlert : a)));
+    return () => { socket.off('newAlert'); socket.off('alertUpdated'); };
+  }, [user, checkRelevance]);
 
   const updateStatus = async (id, status) => {
     // Optimistic UI update

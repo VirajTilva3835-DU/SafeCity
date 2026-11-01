@@ -7,12 +7,15 @@ const socket = io(import.meta.env.VITE_API_URL || "http://localhost:5000");
 const BroadcastNotification = () => {
   const [activeBroadcasts, setActiveBroadcasts] = useState([]);
 
+  const dismissBroadcast = (id) => {
+    setActiveBroadcasts(prev => prev.filter(b => b._id !== id && b.id !== id));
+  };
+
   useEffect(() => {
     socket.on('broadcastAlert', (broadcast) => {
       setActiveBroadcasts(prev => [...prev, { ...broadcast, id: Date.now() }]);
       
-      // Auto-remove after 30 seconds if it's not a critical type (if we had types)
-      // For now keep them until dismissed or for 1 min
+      // Auto-remove after 60s
       setTimeout(() => {
         dismissBroadcast(broadcast._id);
       }, 60000);
@@ -22,10 +25,6 @@ const BroadcastNotification = () => {
       socket.off('broadcastAlert');
     };
   }, []);
-
-  const dismissBroadcast = (id) => {
-    setActiveBroadcasts(prev => prev.filter(b => b._id !== id && b.id !== id));
-  };
 
   if (activeBroadcasts.length === 0) return null;
 

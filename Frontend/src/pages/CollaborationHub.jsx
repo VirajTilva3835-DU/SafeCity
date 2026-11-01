@@ -47,9 +47,9 @@ const CollaborationHub = () => {
   const handleContactProvider = (contact) => {
     if (!contact) return;
     if (contact.includes('@')) {
-      window.location.href = `mailto:${contact}`;
+      window.location.assign(`mailto:${contact}`);
     } else {
-      window.location.href = `tel:${contact.replace(/[^0-9+]/g, '')}`;
+      window.location.assign(`tel:${contact.replace(/[^0-9+]/g, '')}`);
     }
   };
 

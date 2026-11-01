@@ -19,7 +19,7 @@ router.post('/safety-checks/create', async (req, res) => {
   try {
     const check = new SafetyCheck(req.body);
     await check.save();
-    global.io.emit('newSafetyCheck', check);
+    global.io?.emit('newSafetyCheck', check);
     res.json(check);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -32,7 +32,7 @@ router.post('/safety-checks/:id/respond', async (req, res) => {
     
     check.responses.push({ name, age, status, userId: Date.now().toString() });
     await check.save();
-    global.io.emit('safetyCheckUpdated', check);
+    global.io?.emit('safetyCheckUpdated', check);
     res.json(check);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -40,7 +40,7 @@ router.post('/safety-checks/:id/respond', async (req, res) => {
 router.put('/safety-checks/:id/close', async (req, res) => {
   try {
     const check = await SafetyCheck.findByIdAndUpdate(req.params.id, { isActive: false }, { new: true });
-    global.io.emit('safetyCheckUpdated', check);
+    global.io?.emit('safetyCheckUpdated', check);
     res.json(check);
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -48,7 +48,7 @@ router.put('/safety-checks/:id/close', async (req, res) => {
 router.delete('/safety-checks/:id', async (req, res) => {
   try {
     await SafetyCheck.findByIdAndDelete(req.params.id);
-    global.io.emit('safetyCheckDeleted', req.params.id);
+    global.io?.emit('safetyCheckDeleted', req.params.id);
     res.json({ message: 'Safety check deleted' });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });
@@ -68,7 +68,7 @@ router.post('/hazards/create', async (req, res) => {
   try {
     const hazard = new HazardZone(req.body);
     await hazard.save();
-    global.io.emit('newHazard', hazard);
+    global.io?.emit('newHazard', hazard);
     res.json(hazard);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -90,7 +90,7 @@ router.delete('/hazards/:id', async (req, res) => {
       }
     }
 
-    global.io.emit('hazardRemoved', req.params.id);
+    global.io?.emit('hazardRemoved', req.params.id);
     res.json({ message: 'Hazard zone deactivated successfully' });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -109,7 +109,7 @@ router.post('/broadcast/send', async (req, res) => {
   try {
     const broadcast = new Broadcast(req.body);
     await broadcast.save();
-    global.io.emit('broadcastAlert', broadcast);
+    global.io?.emit('broadcastAlert', broadcast);
     res.json(broadcast);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -119,7 +119,7 @@ router.post('/broadcast/send', async (req, res) => {
 router.put('/broadcast/:id/close', async (req, res) => {
   try {
     await Broadcast.findByIdAndUpdate(req.params.id, { isActive: false });
-    global.io.emit('broadcastClosed', req.params.id);
+    global.io?.emit('broadcastClosed', req.params.id);
     res.json({ message: 'Broadcast closed' });
   } catch (err) { res.status(500).json({ message: err.message }); }
 });

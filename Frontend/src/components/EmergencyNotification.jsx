@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import io from 'socket.io-client';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -11,33 +11,11 @@ const EmergencyNotification = () => {
   const navigate = useNavigate();
   const [newAlerts, setNewAlerts] = useState([]);
 
-  useEffect(() => {
-    if (!user) return;
+  const dismissAlert = useCallback((id) => {
+    setNewAlerts(prev => prev.filter(a => a.id !== id));
+  }, []);
 
-    socket.on('newAlert', (alert) => {
-      if (checkRelevance(alert)) {
-        const id = Date.now();
-        setNewAlerts(prev => [...prev, { ...alert, id }]);
-        
-        // Play alert sound
-        try {
-          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-          audio.play();
-        } catch (e) { console.log('Audio play failed'); }
-
-        // Auto dismiss after 15 seconds
-        setTimeout(() => {
-          dismissAlert(id);
-        }, 15000);
-      }
-    });
-
-    return () => {
-      socket.off('newAlert');
-    };
-  }, [user]);
-
-  const checkRelevance = (alert) => {
+  const checkRelevance = useCallback((alert) => {
     if (!user || !alert) return false;
     if (user.role === 'admin') return true; // Admins see everything
 
@@ -54,11 +32,35 @@ const EmergencyNotification = () => {
     if (dept === 'fire') return aDept === 'fire' || aType === 'fire' || aType === 'sos';
     if (dept === 'ambulance' || dept === 'medical') return aDept === 'ambulance' || aDept === 'medical' || aType === 'medical' || aType === 'accident' || aType === 'sos';
     return aDept === dept || aDept === 'none' || aType === 'sos';
-  };
+  }, [user]);
 
-  const dismissAlert = (id) => {
-    setNewAlerts(prev => prev.filter(a => a.id !== id));
-  };
+  useEffect(() => {
+    if (!user) return;
+
+    socket.on('newAlert', (alert) => {
+      if (checkRelevance(alert)) {
+        const id = Date.now();
+        setNewAlerts(prev => [...prev, { ...alert, id }]);
+        
+        // Play alert sound
+        try {
+          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+          audio.play().catch(() => {});
+        } catch {
+          console.log('Audio play failed');
+        }
+
+        // Auto dismiss after 15 seconds
+        setTimeout(() => {
+          dismissAlert(id);
+        }, 15000);
+      }
+    });
+
+    return () => {
+      socket.off('newAlert');
+    };
+  }, [user, checkRelevance, dismissAlert]);
 
   const handleNavigate = (alert) => {
     if (user.role === 'admin') navigate('/admin');

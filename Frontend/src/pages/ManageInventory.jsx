@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -60,7 +60,8 @@ const ManageInventory = () => {
 
   const currentOptions = user ? (departmentOptions[user.departmentType] || defaultOptions) : defaultOptions;
 
-  const fetchResources = async () => {
+  const fetchResources = useCallback(async () => {
+    if (!user || !user.departmentType) return;
     setLoading(true);
     try {
       const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -71,11 +72,11 @@ const ManageInventory = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchResources();
-  }, [user]);
+  }, [fetchResources]);
 
   const handleAddResource = async (e) => {
     e.preventDefault();

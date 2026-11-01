@@ -52,7 +52,9 @@ const LiveDispatchMap = () => {
         } else {
           setHazards(data);
         }
-      } catch (err) {}
+      } catch (err) {
+        console.warn('Failed to fetch hazards', err);
+      }
     };
     
     const fetchResources = async () => {
@@ -77,7 +79,9 @@ const LiveDispatchMap = () => {
 
         setResources(grouped);
         if (grouped.length > 0) setSelectedResource(grouped[0]._id);
-      } catch (err) {}
+      } catch (err) {
+        console.warn('Failed to fetch resources', err);
+      }
     };
 
     fetchHazards();

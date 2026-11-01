@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Package, Plus, Minus, RefreshCw, Send, AlertTriangle, X, Edit3, ShieldAlert, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const ResourceInventory = ({ departmentType, isFull = false }) => {
   const [resources, setResources] = useState([]);
-  const [activeHazards, setActiveHazards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
@@ -48,7 +47,7 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
 
   const currentOptions = departmentOptions[departmentType] || defaultOptions;
 
-  const fetchResources = async () => {
+  const fetchResources = useCallback(async () => {
     setLoading(true);
     try {
       const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -62,21 +61,11 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fetchHazards = async () => {
-    try {
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/admin-tools/hazards`);
-      setActiveHazards(data);
-      if (data.length > 0) setSelectedHazard(data[0]._id);
-    } catch (err) { console.error('Failed to fetch hazards', err); }
-  };
+  }, [departmentType]);
 
   useEffect(() => {
     fetchResources();
-    fetchHazards();
-  }, [departmentType]);
-
+  }, [fetchResources]);
 
   const updateQuantity = async (resource, newQty) => {
     if (newQty < 0) return;
@@ -91,7 +80,7 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
           unit: resource.unit,
           quantity: newQty,
           departmentType: departmentType,
-          lastUpdated: Date.now()
+          lastUpdated: new Date()
         }, { headers: { Authorization: `Bearer ${token}` } });
         setResources(prev => [...prev, data]);
       } else {
@@ -102,7 +91,7 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
         setResources(resources.map(r => r._id === resource._id ? { ...r, quantity: newQty } : r));
       }
     } catch (err) {
-      console.error('Update failed');
+      console.error('Update failed', err);
     }
   };
 
@@ -116,7 +105,7 @@ const ResourceInventory = ({ departmentType, isFull = false }) => {
       unit: opt.unit,
       quantity: 0,
       departmentType: departmentType,
-      lastUpdated: Date.now(),
+      lastUpdated: null,
       isVirtual: true
     };
   });

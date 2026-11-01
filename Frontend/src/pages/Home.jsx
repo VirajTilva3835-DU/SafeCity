@@ -124,7 +124,7 @@ const Home = () => {
                     <div>
                        <h3 className="font-black text-red-900 text-lg uppercase tracking-wider mb-1">System Directive</h3>
                        <p className="font-bold text-red-700">{protocol.message}</p>
-                       <p className="text-xs text-red-400 mt-2 font-medium">{new Date(protocol.sentAt || Date.now()).toLocaleString()}</p>
+                       <p className="text-xs text-red-400 mt-2 font-medium">{protocol.sentAt ? new Date(protocol.sentAt).toLocaleString() : 'Just now'}</p>
                     </div>
                  </div>
                ))}

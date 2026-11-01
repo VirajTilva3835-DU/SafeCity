@@ -29,29 +29,23 @@ const AdminDashboard = () => {
   const [pulseTitle, setPulseTitle] = useState('');
   const [pulseArea, setPulseArea] = useState('');
 
-  useEffect(() => {
-    fetchAlerts();
-    fetchVolunteers();
-    fetchSafetyChecks();
-    fetchPendingItems();
-    fetchActiveBroadcasts();
-    socket.on('newAlert', (newAlert) => setAlerts(prev => [newAlert, ...prev]));
-    socket.on('alertUpdated', (updatedAlert) => setAlerts(prev => prev.map(a => a._id === updatedAlert._id ? updatedAlert : a)));
-    socket.on('newSafetyCheck', (newCheck) => setSafetyChecks(prev => [newCheck, ...prev]));
-    socket.on('safetyCheckUpdated', (updatedCheck) => setSafetyChecks(prev => prev.map(c => c._id === updatedCheck._id ? updatedCheck : c)));
-    socket.on('safetyCheckDeleted', (id) => setSafetyChecks(prev => prev.filter(c => c._id !== id)));
-    socket.on('broadcastAlert', (newAlert) => setActiveBroadcasts(prev => [newAlert, ...prev]));
-    socket.on('broadcastClosed', (id) => setActiveBroadcasts(prev => prev.filter(b => b._id !== id)));
-    socket.on('alertDeleted', (id) => setAlerts(prev => prev.filter(a => a._id !== id)));
-    return () => {
-      socket.off('newSafetyCheck');
-      socket.off('safetyCheckUpdated');
-      socket.off('safetyCheckDeleted');
-      socket.off('broadcastAlert');
-      socket.off('broadcastClosed');
-      socket.off('alertDeleted');
-    };
-  }, []);
+  const fetchAlerts = async () => {
+    try {
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/admin`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setAlerts(data);
+    } catch (err) { console.error(err); }
+  };
+
+  const fetchVolunteers = async () => {
+    try {
+      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/collaboration/volunteers`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+      setVolunteers(data);
+    } catch (err) { console.error(err); }
+  };
 
   const fetchSafetyChecks = async () => {
     try {
@@ -80,6 +74,30 @@ const AdminDashboard = () => {
     } catch (err) { console.error(err); }
   };
 
+  useEffect(() => {
+    fetchAlerts();
+    fetchVolunteers();
+    fetchSafetyChecks();
+    fetchPendingItems();
+    fetchActiveBroadcasts();
+    socket.on('newAlert', (newAlert) => setAlerts(prev => [newAlert, ...prev]));
+    socket.on('alertUpdated', (updatedAlert) => setAlerts(prev => prev.map(a => a._id === updatedAlert._id ? updatedAlert : a)));
+    socket.on('newSafetyCheck', (newCheck) => setSafetyChecks(prev => [newCheck, ...prev]));
+    socket.on('safetyCheckUpdated', (updatedCheck) => setSafetyChecks(prev => prev.map(c => c._id === updatedCheck._id ? updatedCheck : c)));
+    socket.on('safetyCheckDeleted', (id) => setSafetyChecks(prev => prev.filter(c => c._id !== id)));
+    socket.on('broadcastAlert', (newAlert) => setActiveBroadcasts(prev => [newAlert, ...prev]));
+    socket.on('broadcastClosed', (id) => setActiveBroadcasts(prev => prev.filter(b => b._id !== id)));
+    socket.on('alertDeleted', (id) => setAlerts(prev => prev.filter(a => a._id !== id)));
+    return () => {
+      socket.off('newSafetyCheck');
+      socket.off('safetyCheckUpdated');
+      socket.off('safetyCheckDeleted');
+      socket.off('broadcastAlert');
+      socket.off('broadcastClosed');
+      socket.off('alertDeleted');
+    };
+  }, []);
+
   const handleApproveItem = async (id) => {
     try {
       const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -87,7 +105,7 @@ const AdminDashboard = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setPendingItems(prev => prev.filter(i => i._id !== id));
-    } catch (err) { alert('Failed to approve'); }
+    } catch (_err) { alert('Failed to approve'); }
   };
 
   const handleRejectItem = async (id) => {
@@ -97,7 +115,7 @@ const AdminDashboard = () => {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       setPendingItems(prev => prev.filter(i => i._id !== id));
-    } catch (err) { alert('Failed to reject'); }
+    } catch (_err) { alert('Failed to reject'); }
   };
 
   const handleInitiatePulse = async () => {
@@ -111,24 +129,6 @@ const AdminDashboard = () => {
       setPulseTitle('');
       setPulseArea('');
       alert('Safety Pulse Initiated!');
-    } catch (err) { console.error(err); }
-  };
-
-  const fetchAlerts = async () => {
-    try {
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/alerts/admin`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      setAlerts(data);
-    } catch (err) { console.error(err); }
-  };
-
-  const fetchVolunteers = async () => {
-    try {
-      const { data } = await axios.get(`${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api/collaboration/volunteers`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-      setVolunteers(data);
     } catch (err) { console.error(err); }
   };
 

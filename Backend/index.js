@@ -48,9 +48,14 @@ app.use('/api/collaboration', collaborationRoutes);
 
 // Root Health Check
 app.get('/', async (req, res) => {
-  const dbName = mongoose.connection.name;
-  const alertCount = await mongoose.model('Alert').countDocuments({});
-  res.send(`
+  try {
+    const isConnected = mongoose.connection.readyState === 1;
+    const dbName = isConnected ? (mongoose.connection.name || 'Connected') : 'Connecting/Disconnected';
+    let alertCount = 0;
+    if (isConnected) {
+      alertCount = await mongoose.model('Alert').countDocuments({}).catch(() => 0);
+    }
+    res.send(`
     <div style="font-family: sans-serif; padding: 40px; text-align: center; background: #f8fafc; min-height: 100vh;">
       <h1 style="font-size: 48px; margin-bottom: 8px;">🚀 SafeCity API</h1>
       <p style="color: #64748b; font-size: 20px; font-weight: 600;">Status: Healthy & Online</p>
@@ -68,6 +73,9 @@ app.get('/', async (req, res) => {
       <p style="margin-top: 40px; font-family: monospace; color: #94a3b8; font-size: 12px;">Protocol Version: v2.5.1-FINAL-SYNC</p>
     </div>
   `);
+  } catch (err) {
+    res.status(500).send(`API Error: ${err.message}`);
+  }
 });
 
 
